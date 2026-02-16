@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
+import { sendWelcomeEmail } from "../emails/emailHandlers.js"
 import { generateToken } from "../utils/generateToken.js";
 import bcrypt from "bcryptjs";
+import "dotenv/config";
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -28,8 +30,8 @@ export const signup = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
-    if (user) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         message: "Email already exists",
         success: false
@@ -46,27 +48,33 @@ export const signup = async (req, res) => {
     });
 
     if (!newUser) {
-      return res.send(400).json({
+      return res.status(400).json({
         message: "Invalid user data",
         success: false
       });
     }
 
-    await newUser.save();
-    generateToken(newUser._id, res);
+    const savedUser = await newUser.save();
+    generateToken(savedUser._id, res);
+
+    const user = savedUser.toObject();
+    delete user.password;
 
     res.status(201).json({
       message: "User created successfully",
-      data: {
-        fullName: newUser.fullName,
-        email: newUser.email,
-      },
+      data: user,
       success: true
     });
 
+    try {
+      await sendWelcomeEmail(user.email, user.fullName, process.env.CLIENT_URL);
+    } catch (error) {
+      console.error("Error sending welcome email: ", error)
+    }
+
   } catch (error) {
     console.error("Error creating new user: ", error);
-    res.send(500).json({
+    res.status(500).json({
       message: "Internal server error",
       success: false
     })

@@ -4,7 +4,6 @@ import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./db/index.js";
-import { error } from "console";
 
 dotenv.config();
 
