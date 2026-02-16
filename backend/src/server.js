@@ -4,6 +4,7 @@ import path from "path";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./db/index.js";
+import { error } from "console";
 
 dotenv.config();
 
@@ -24,7 +25,13 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  connectDB();
-});
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.log("Failed to connect to DB: ", error);
+    process.exit(1);
+  });
