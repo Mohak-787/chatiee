@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import { sendWelcomeEmail } from "../emails/emailHandlers.js"
 import { generateToken } from "../utils/generateToken.js";
 import bcrypt from "bcryptjs";
+import cloudinary from "../utils/cloudinary.js";
 import "dotenv/config";
 
 export const signup = async (req, res) => {
@@ -85,6 +86,13 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "All fields are required",
+        success: false
+      });
+    }
+
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials", success: false });
 
@@ -114,4 +122,31 @@ export const login = async (req, res) => {
 export const logout = async (_, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
   res.status(200).json({ message: "Logged out successfully", success: true })
+}
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePicture } = req.body;
+    if (!profilePicture) return res.status(400).json({ message: "Profile picture is required", success: false });
+
+    const userId = res.user._id;
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePicture);
+    const updatedUser = await User.findByIdAndUpdate(userId, 
+      { profilePicture: uploadResponse.secure_url }, 
+      { new: true });
+
+    res.status(200).json({
+      message: "Updated user successfully",
+      data: updatedUser,
+      success: true
+    });
+    
+  } catch (error) {
+    console.error("Error updating user: ", error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false
+    });
+  }
 }
