@@ -134,14 +134,14 @@ export const updateProfile = async (req, res) => {
     const uploadResponse = await cloudinary.uploader.upload(profilePicture);
     const updatedUser = await User.findByIdAndUpdate(userId, 
       { profilePicture: uploadResponse.secure_url }, 
-      { new: true });
+      { new: true }).select("-password");
 
     res.status(200).json({
       message: "Updated user successfully",
       data: updatedUser,
       success: true
     });
-    
+
   } catch (error) {
     console.error("Error updating user: ", error);
     res.status(500).json({
