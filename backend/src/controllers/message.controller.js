@@ -1,6 +1,7 @@
 import { Message } from "../models/message.model.js";
 import { User } from "../models/user.model.js";
-import cloudinary from "../utils/cloudinary.js"
+import { getReceiverSocketId, io } from "../utils/socket.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const getAllContacts = async (req, res) => {
   try {
@@ -75,6 +76,12 @@ export const sendMessage = async (req, res) => {
 
     await newMessage.save();
 
+    const receiverSocketId = getReceiverSocketId(receiverId);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     res.status(201).json(newMessage);
 
   } catch (error) {
@@ -88,7 +95,7 @@ export const sendMessage = async (req, res) => {
 
 export const getChatPartners = async (req, res) => {
   try {
-   const loggedInUserId = req.user._id;
+    const loggedInUserId = req.user._id;
 
     const messages = await Message.find({
       $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
