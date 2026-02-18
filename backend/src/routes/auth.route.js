@@ -9,7 +9,7 @@ router.use(arcjetProtection);
 
 router.route("/signup").post(signup);
 router.route("/login").post(login);
-router.route("/logout").post(verifyJwt, logout);
+router.route("/logout").post(logout);
 
 router.route("/update-profile").put(verifyJwt, updateProfile);
 

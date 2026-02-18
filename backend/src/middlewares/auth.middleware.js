@@ -11,7 +11,7 @@ export const verifyJwt = async (req, res, next) => {
     if (!decodedToken) return res.status(401).json({ message: "Unauthorized - Invalid token", success: false });
 
     const user = await User.findById(decodedToken.userId).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found", message: false });
+    if (!user) return res.status(404).json({ message: "User not found", success: false });
 
     req.user = user;
     next();

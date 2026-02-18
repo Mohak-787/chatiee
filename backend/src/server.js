@@ -5,14 +5,16 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./db/index.js";
+import { app, server } from "./utils/socket.js";
+import cors from "cors";
 
 dotenv.config();
 
-const app = express();
 const __dirname = path.resolve();
 const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoutes);
@@ -28,7 +30,7 @@ if (process.env.NODE_ENV === "production") {
 
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);
     });
   })
