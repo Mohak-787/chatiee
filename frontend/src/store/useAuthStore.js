@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const extractUser = (payload) => payload?.data ?? payload;
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -17,7 +18,7 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
-      set({ authUser: res.data });
+      set({ authUser: extractUser(res.data) });
       get().connectSocket();
     } catch (error) {
       console.log("Error in authCheck:", error);
@@ -31,12 +32,12 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
+      set({ authUser: extractUser(res.data) });
 
       toast.success("Account created successfully!");
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Could not create account");
     } finally {
       set({ isSigningUp: false });
     }
@@ -46,13 +47,13 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
+      set({ authUser: extractUser(res.data) });
 
       toast.success("Logged in successfully");
 
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Could not log in");
     } finally {
       set({ isLoggingIn: false });
     }
@@ -73,11 +74,11 @@ export const useAuthStore = create((set, get) => ({
   updateProfile: async (data) => {
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
+      set({ authUser: extractUser(res.data) });
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log("Error in update profile:", error);
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Could not update profile");
     }
   },
 
@@ -100,5 +101,6 @@ export const useAuthStore = create((set, get) => ({
 
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
+    set({ socket: null, onlineUsers: [] });
   },
 }));

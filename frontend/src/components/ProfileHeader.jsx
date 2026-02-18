@@ -22,7 +22,7 @@ function ProfileHeader() {
     reader.onloadend = async () => {
       const base64Image = reader.result;
       setSelectedImg(base64Image);
-      await updateProfile({ profilePic: base64Image });
+      await updateProfile({ profilePicture: base64Image });
     };
   };
 
@@ -37,7 +37,7 @@ function ProfileHeader() {
               onClick={() => fileInputRef.current.click()}
             >
               <img
-                src={selectedImg || authUser.profilePic || "/avatar.png"}
+                src={selectedImg || authUser.profilePicture || "/avatar.png"}
                 alt="User image"
                 className="size-full object-cover"
               />

@@ -60,6 +60,8 @@ export const useChatStore = create((set, get) => ({
     const { selectedUser, messages } = get();
     const { authUser } = useAuthStore.getState();
 
+    if (!selectedUser || !authUser) return;
+
     const tempId = `temp-${Date.now()}`;
 
     const optimisticMessage = {
@@ -76,7 +78,9 @@ export const useChatStore = create((set, get) => ({
 
     try {
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: messages.concat(res.data) });
+      set({
+        messages: get().messages.map((message) => (message._id === tempId ? res.data : message)),
+      });
     } catch (error) {
 
       set({ messages: messages });
@@ -89,9 +93,10 @@ export const useChatStore = create((set, get) => ({
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
 
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+      const isMessageSentFromSelectedUser = String(newMessage.senderId) === String(selectedUser._id);
       if (!isMessageSentFromSelectedUser) return;
 
       const currentMessages = get().messages;
@@ -108,6 +113,7 @@ export const useChatStore = create((set, get) => ({
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
     socket.off("newMessage");
   },
 }));
